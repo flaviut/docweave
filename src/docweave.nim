@@ -9,7 +9,7 @@ let
   utilPatterms = """
       (?(DEFINE)
         (?<generic_pat>\[.+\])
-        (?<docstring_pat>(?:[ ]{2,} \#\# \s .+\n)*)
+        (?<docstring_pat>(?:[ ]{2,} \#\# \s .*\n)*)
       )
     """
   typeDefPattern = re("""(?mix)
