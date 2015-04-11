@@ -87,14 +87,16 @@ let types = sourceFile.findAllCaptureTables(typeDefPattern)
 
 echo moduleComments
 
-echo "Operations"
-echo "----------"
-for p in procs:
-  echo()
-  echo(renderProc(p))
-
+echo ()
 echo "Types"
 echo "-----"
 for t in types:
-  echo()
-  echo(renderType(t))
+  echo ()
+  echo renderType(t)
+
+echo ()
+echo "Operations"
+echo "----------"
+for p in procs:
+  echo ()
+  echo renderProc(p)
