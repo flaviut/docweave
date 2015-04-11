@@ -66,7 +66,7 @@ proc renderProc(self: Table[string, string]): string =
     self["args"],
     self["return_type"],
   ]
-  result.add('\l' & repeatChar(result.len, '.') & '\l')
+  result.add('\l' & repeatChar(result.len, '~') & '\l')
   result.add(self["docstring"].stripComments())
 
 proc renderType*(self: Table[string, string]): string =
@@ -75,7 +75,7 @@ proc renderType*(self: Table[string, string]): string =
     if self["generic_args"] != nil: self["generic_args"] else: "",
     self["type"],
   ]
-  result.add('\l' & repeatChar(result.len, '.') & '\l')
+  result.add('\l' & repeatChar(result.len, '~') & '\l')
   result.add(self["docstring"].stripComments())
 
 
