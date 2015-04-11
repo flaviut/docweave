@@ -12,7 +12,8 @@ let
         (?<docstring_pat>(?:[ ]{2,} \#\# \s .+\n)*)
       )
     """
-  typeDefPattern = re("""(?ix)
+  typeDefPattern = re("""(?mix)
+      ^(?:type \h+|\h+)
       (?<name>\w+) \s* \* \s*
       (?<generic_args>(?&generic_pat))? \s*
       (?<pragmas> {\. .* \.})? \s*
@@ -22,20 +23,21 @@ let
         distinct \s* \w+ |
         enum
       )
-      \R
+      \n
       (?<docstring>(?&docstring_pat))
     """ & utilPatterms)
-  procDefPattern = re("""(?ix)
+  procDefPattern = re("""(?mix)
+      ^
       (?<type>proc|template|iterator|macro) \s*
       (?<name>\w+|`[\]\[*=$]+`) \s* \* \s*
       (?<generic_args>(?&generic_pat))? \s*
       \((?<args>
-        (?:.+ \s* (?: : \s* .+ \s* )?,)*
-        (?:.+ \s* (?: : \s* .+ \s* )?)?
+        (?:.+ \s* (?: : \s*+ .+ \s* )?,)*?
+        (?:.+ \s* (?: : \s*+ .+ \s* )?)?
       )\)\s*
       (?: : \s* (?<return_type>\w+ \s*? (?&generic_pat)?))? \s*
       (?<pragmas> {\. .* \.})? \s*
-      = \s* \R
+      = \s* \n
       (?<docstring>(?&docstring_pat))
     """ & utilPatterms)
   moduleCommentPattern = re"""(?imx) ^ \#\# \s (.+) \s* $"""
@@ -57,7 +59,7 @@ proc stripComments(self: string): string =
 
 
 proc renderProc(self: Table[string, string]): string =
-  result = "$# $#*$#($#): $#" % [
+  result = "``$# $#*$#($#): $#``" % [
     self["type"],
     self["name"],
     if self["generic_args"] != nil: self["generic_args"] else: "",
@@ -68,7 +70,7 @@ proc renderProc(self: Table[string, string]): string =
   result.add(self["docstring"].stripComments())
 
 proc renderType*(self: Table[string, string]): string =
-  result = "type $#*$# = $#" % [
+  result = "``type $#*$# = $#``" % [
     self["name"],
     if self["generic_args"] != nil: self["generic_args"] else: "",
     self["type"],
@@ -86,9 +88,15 @@ let procs = sourceFile.findAllCaptureTables(procDefPattern)
 let types = sourceFile.findAllCaptureTables(typeDefPattern)
 
 echo moduleComments
+
+echo "Operations"
+echo "----------"
 for p in procs:
   echo()
   echo(renderProc(p))
+
+echo "Types"
+echo "-----"
 for t in types:
   echo()
   echo(renderType(t))
