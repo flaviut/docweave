@@ -14,39 +14,40 @@ let
     """
   typeDefPattern = re("""(?mix)
       ^(?:type \h+|\h+)
-      (?<name>\w+) \s* \* \s*
-      (?<generic_args>(?&generic_pat))? \s*
-      (?<pragmas> {\. .* \.})? \s*
-      = \s*
       (?<type>
-        (?:ref)? \s* object \s* (?:of \s* \w+)?|
-        distinct \s* \w+ |
-        enum
+        \w+ \s* \* \s*
+        .* 
+        = \s*
+        (?:
+          (?:ref)? \s* object \s* (?:of \s* \w+)?|
+          distinct \s* \w+ |
+          enum
+        )
       )
       \n
       (?<docstring>(?&docstring_pat))
-    """ & utilPatterms)
+    """ & utilPatterms, "<anycrlf>")
   procDefPattern = re("""(?mix)
-      ^
-      (?<type>proc|template|iterator|macro) \s*
-      (?<name>\w+|`[\]\[*=$]+`) \s* \* \s*
-      (?<generic_args>(?&generic_pat))? \s*
-      \((?<args>
-        (?:.+ \s* (?: : \s*+ .+ \s* )?,)*?
-        (?:.+ \s* (?: : \s*+ .+ \s* )?)?
-      )\)\s*
-      (?: : \s* (?<return_type>\w+ \s*? (?&generic_pat)?))? \s*
-      (?<pragmas> {\. .* \.})? \s*
-      = \s* \n
+      ^\s*
+      (?<def>
+        (?:proc|template|iterator|macro) \s*
+        (?:\w+|`[\]\[*=$]+`) \s* \*
+        (?:[\S\s](?!=\n))*
+      ) \s* = \n
       (?<docstring>(?&docstring_pat))
-    """ & utilPatterms)
+    """ & utilPatterms, "<anycrlf>")
   moduleCommentPattern = re"""(?imx) ^ \#\# (?:[ ] (.+))? \h* $"""
+  multipleWhitespacePattern = re"\s{2,}"
+
+proc box*[T](val: T): ref T =
+  new result
+  result[] = val
 
 
-proc findAllCaptureTables(input:  string, re: Regex): seq[Table[string, string]]=
+proc findAllCaptureTables(input:  string, re: Regex): seq[ref Table[string, string]]=
   result = @[]
   for match in input.findIter(re):
-    result.add(match.captures.toTable())
+    result.add(box match.captures.toTable())
 
 
 proc stripComments(self: string): string =
@@ -56,22 +57,16 @@ proc stripComments(self: string): string =
     result.add("\l")
 
 
-proc renderProc(self: Table[string, string]): string =
-  result = "``$# $#*$#($#): $#``" % [
-    self["type"],
-    self["name"],
-    if self["generic_args"] != nil: self["generic_args"] else: "",
-    self["args"],
-    self["return_type"],
+proc renderProc(self: ref Table[string, string]): string =
+  result = "``$#``" % [
+    self["def"].replace(multipleWhitespacePattern, " "),
   ]
   result.add('\l' & repeatChar(result.len, '~') & '\l')
   result.add(self["docstring"].stripComments())
 
-proc renderType*(self: Table[string, string]): string =
-  result = "``type $#*$# = $#``" % [
-    self["name"],
-    if self["generic_args"] != nil: self["generic_args"] else: "",
-    self["type"],
+proc renderType*(self: ref Table[string, string]): string =
+  result = "``type $#``" % [
+    self["type"].replace(multipleWhitespacePattern, " "),
   ]
   result.add('\l' & repeatChar(result.len, '~') & '\l')
   result.add(self["docstring"].stripComments())
@@ -85,18 +80,20 @@ let moduleComments = toSeq(sourceFile.findIter(moduleCommentPattern))
 let procs = sourceFile.findAllCaptureTables(procDefPattern)
 let types = sourceFile.findAllCaptureTables(typeDefPattern)
 
-echo moduleComments
+var result = moduleComments
+result.add "\l"
 
-echo ()
-echo "Types"
-echo "-----"
+result.add "Types"
+result.add "-----"
 for t in types:
-  echo ()
-  echo renderType(t)
+  result.add "\l"
+  result.add renderType(t)
 
-echo ()
-echo "Operations"
-echo "----------"
+result.add "\l"
+result.add "Operations"
+result.add "----------"
 for p in procs:
-  echo ()
-  echo renderProc(p)
+  result.add "\l"
+  result.add renderProc(p)
+
+echo result
