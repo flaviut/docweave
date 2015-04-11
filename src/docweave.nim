@@ -40,7 +40,7 @@ let
       = \s* \n
       (?<docstring>(?&docstring_pat))
     """ & utilPatterms)
-  moduleCommentPattern = re"""(?imx) ^ \#\# \s (.+) \s* $"""
+  moduleCommentPattern = re"""(?imx) ^ \#\# (?:[ ] (.+))? \h* $"""
 
 
 proc findAllCaptureTables(input:  string, re: Regex): seq[Table[string, string]]=
@@ -52,10 +52,8 @@ proc findAllCaptureTables(input:  string, re: Regex): seq[Table[string, string]]
 proc stripComments(self: string): string =
   result = ""
   for line in splitLines(self):
-    let nextLine = line.strip()[3 .. ^1]
-    if nextLine != "":
-      result.add(nextLine)
-      result.add("\l")
+    result.add(line.strip()[3 .. ^1])
+    result.add("\l")
 
 
 proc renderProc(self: Table[string, string]): string =
@@ -82,7 +80,7 @@ proc renderType*(self: Table[string, string]): string =
 
 let sourceFile = readFile(commandLineParams()[0])
 let moduleComments = toSeq(sourceFile.findIter(moduleCommentPattern))
-                     .mapIt(string, it.captures[0])
+                     .mapIt(string, if it.captures[0] != nil: it.captures[0] else: "")
                      .join("\l")
 let procs = sourceFile.findAllCaptureTables(procDefPattern)
 let types = sourceFile.findAllCaptureTables(typeDefPattern)
