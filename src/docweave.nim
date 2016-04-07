@@ -12,7 +12,7 @@ let
         (?<docstring_pat>(?:[ ]{2,} \#\# \s .*\n)+)
       )
     """
-  typeDefPattern = re("""(?mix)
+  typeDefPattern = re("""(*ANYCRLF)(?mix)
       ^(?:type \h+|\h+)
       (?<type>
         \w+ \s* \* \s*
@@ -26,8 +26,8 @@ let
       )
       \n
       (?<docstring>(?&docstring_pat))
-    """ & utilPatterms, "<anycrlf>")
-  procDefPattern = re("""(?mix)
+    """ & utilPatterms)
+  procDefPattern = re("""(*ANYCRLF)(?mix)
       ^\s*
       (?<def>
         (?:proc|template|iterator|macro) \s*
@@ -35,7 +35,7 @@ let
         (?:[\S\s](?!=\n))*
       ) \s* = \n
       (?<docstring>(?&docstring_pat))
-    """ & utilPatterms, "<anycrlf>")
+    """ & utilPatterms)
   moduleCommentPattern = re"""(?imx) ^ \#\# (?:[ ] (.+))? \h* $"""
   multipleWhitespacePattern = re"\s{2,}"
 
@@ -83,15 +83,15 @@ let types = sourceFile.findAllCaptureTables(typeDefPattern)
 var result = moduleComments
 result.add "\l"
 
-result.add "Types"
-result.add "-----"
+result.add "Types\l"
+result.add "-----\l"
 for t in types:
   result.add "\l"
   result.add renderType(t)
 
 result.add "\l"
-result.add "Operations"
-result.add "----------"
+result.add "Operations\l"
+result.add "----------\l"
 for p in procs:
   result.add "\l"
   result.add renderProc(p)

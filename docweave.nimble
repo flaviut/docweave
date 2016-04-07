@@ -5,6 +5,7 @@ version     = "0.0.1"
 description = "Weave module documentation into a single file"
 license     = "MIT"
 srcDir      = "src"
+bin         = "docweave"
 
 [Deps]
 Requires: "nim >= 0.10.0"
